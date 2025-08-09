@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asterix Voice Quiz</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+    text-align: center;
+  }
+  #quiz-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  button {
+    display: inline-block;
+    padding: 10px 15px;
+    margin: 8px;
+    background: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  #score {
+    font-size: 1.2em;
+    margin-top: 20px;
+  }
+  #spoken-text {
+    margin-top: 10px;
+    font-style: italic;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<div id="quiz-container">
+  <div id="progress"></div>
+  <div id="question"></div>
+  <div id="options"></div>
+  <div id="spoken-text"></div>
+  <div id="score"></div>
+</div>
+
+<script>
+const quizData = [
+  {
+    q: "https://raw.githubusercontent.com/andrewveda/asterix/refs/heads/main/023_032.jpg",
+    options: ["Regularly", "Never", "Rarely", "Only in space"],
+    correct: "Rarely"
+  },
+  {
+    q: "https://raw.githubusercontent.com/andrewveda/asterix/refs/heads/main/Screenshot%202025-08-07%206.17.07%20PM.png",
+    options: ["Travel to space", "Get a telescope", "Have big ambitions", "Fire a rocket"],
+    correct: "Have big ambitions"
+  }
+];
+
+let current = 0;
+let score = 0;
+
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const progressTracker = document.getElementById("progress");
+const scoreEl = document.getElementById("score");
+const spokenTextEl = document.getElementById("spoken-text");
+
+function loadQuestion() {
+  if (current >= quizData.length) {
+    return showScore();
+  }
+
+  const data = quizData[current];
+
+  questionEl.innerHTML = `<img src="${data.q}" alt="Question Image">`;
+  progressTracker.innerText = `📍 Question ${current + 1} of ${quizData.length}`;
+  optionsEl.innerHTML = "";
+
+  const speakBtn = document.createElement("button");
+  speakBtn.textContent = "🎤 Answer by Voice";
+  speakBtn.onclick = startListening;
+  optionsEl.appendChild(speakBtn);
+
+  // Fallback text buttons
+  data.options.forEach(option => {
+    const btn = document.createElement("button");
+    btn.textContent = option;
+    btn.onclick = () => handleAnswer(option);
+    optionsEl.appendChild(btn);
+  });
+}
+
+function startListening() {
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Sorry, your browser does not support voice input.");
+    return;
+  }
+
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.start();
+
+  recognition.onresult = function(event) {
+    const transcript = event.results[0][0].transcript;
+    spokenTextEl.innerText = `You said: "${transcript}"`;
+    handleAnswer(transcript);
+  };
+
+  recognition.onerror = function(event) {
+    alert("Error with voice recognition: " + event.error);
+  };
+}
+
+function handleAnswer(answer) {
+  const correctAnswer = quizData[current].correct.toLowerCase().trim();
+  if (answer.toLowerCase().trim() === correctAnswer) {
+    score++;
+  }
+  current++;
+  loadQuestion();
+}
+
+function showScore() {
+  questionEl.innerHTML = "";
+  optionsEl.innerHTML = "";
+  progressTracker.innerText = "✅ Quiz Completed!";
+  spokenTextEl.innerHTML = "";
+  scoreEl.innerText = `Your score: ${score} / ${quizData.length}`;
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
